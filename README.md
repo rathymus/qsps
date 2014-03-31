@@ -13,7 +13,12 @@ or plugins to choose from. As simple as it can be.
 I also didn't want to have to login in order to post something. So you have to sign your content
 instead. QSPS will check for a valid sgnature and act accordingly.
 
-**What QSPS is:** The simplest, down
+**What QSPS is:** The simplest, most down-to-earth blog engine you'll find, with a special appeal to crypto-geeks.
+
+**What QSPS is not:** A Wordpress/Joomla/etc. replacement. It's not a _content management system_. it won't
+give you a pretty editor or a login panel, or a fancy administration page.
+
+So if you have an email address, a PGP key and a desire for simplicity, go ahead and give this one a try.
 
 ##2. Features:
 
