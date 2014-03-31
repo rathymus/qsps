@@ -1,2 +1,5 @@
 # Emacs temp files
 *.~
+*.key
+*.csr
+*.crt
