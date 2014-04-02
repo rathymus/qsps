@@ -2,38 +2,43 @@
  * Suitable to run from a cron-job, this file regularly
  * polls a mailbox for incoming items.
  * Using the ImapMailbox project from https://github.com/barbushin/php-imap/
-
- !PONDER-UPON: Make the 'reply-to' tag act as comment?
- !PONDER-UPON: Use gnupg instead of openssl?
-
-*/
-define('USER_KEYSTORE', '/users/');
-define('USER_KEYSTORE_SALT', 'n3w7QZDBkaETPqDP97CNTLjH');
-define('SIG_FILE_NAME', "signature.asc");
+ */
 
 include_once "ImapMailbox.php";
+
+define('USER_KEYSTORE', '/users/'); //! User certificates folder
+define('USER_KEYSTORE_SALT', 'n3w7QZDBkaETPqDP97CNTLjH');
+define('SIG_FILE_NAME', "signature.asc");
+define('ATTACHMENTS_DIR', "/attachments/"); //! Local(?) attachment download dir
+
+define('QSPS_IMAP_SERVER', ''); //! eg. imap.gmail.com
+define('QSPS_IMAP_PORT', '993');
+define('QSPS_IMAP_USER', '');
+define('QSPS_IMAP_PASS', '');
+define('QSPS_IMAP_ENC', 'utf-8');
+define('QSPS_IMAP_MBOX', 'INBOX');
+
 
 
 function qsps_listen(){
 	/*
-	  You should have a dedicated mailbox with a random password
-	  eg. qsps@example.com
+	  Ideally there should be a dedicated address, ie. qsps@example.com
+	  but you can get away with using a dedicated mailbox
 	*/
-	$server=NULL; //! eg. imap.gmail.com
-	$port  =993;
-	$user  =NULL;
-	$pass  =NULL;
-	$attach=NULL; //! Where attachments end up.
-	$enc   ="utf-8";
 
-	$query ="{".$server.":".$port."}INBOX";
-	$mbox  =new ImapMalbox($query, $user, $pass, $attach, $enc);
-	$msgs  =$mbox->searchMailBox("UNSEEN");
+	$query ="{".QSPS_IMAP_SERVER.":".QSPS_IMAP_PORT."}".QSPS_IMAP_MBOX;
+	$mbox  =new ImapMalbox($query,
+						   QSPS_IMAP_USER,
+						   QSPS_IMAP_PASS,
+						   ATTACHMENTS_DR,
+						   QSPS_IMAP_ENC);
+
+	$msgs  =$mbox->searchMailBox("UNSEEN"); //Search in unread messages
 
 	if(count($msgs)==0)
 		return NULL; //no new emails
 
-	$ret=qsps_verify_mails($msgs, $attach);
+	$ret=qsps_verify_mails($msgs);
 
 	//Mark the rest of the emails as "read"
 	$mbox->markMailsAsRead($ret);
@@ -48,7 +53,7 @@ function qsps_listen(){
  * @param $att Attachments folder
  * @return array of mail IDs which passed the test
  */
-function qsps_verify_mails($m, $att){
+function qsps_verify_mails($m){
 	$c=count($m);
 	$ret=array();
 	for($i=0; $i<$c; $i++){
@@ -56,7 +61,7 @@ function qsps_verify_mails($m, $att){
 			continue;
 		$sig=@file_get_contents($att.SIG_FILE_NAME);
 		if($sig===NULL)
-			die("Sig not found in ".$att.SIG_FILE_NAME);
+			die("Sig not found in ".ATTACHMENTS_DIR.SIG_FILE_NAME);
 
 		$dt=$m[$i]->textPlain;
 
@@ -75,7 +80,7 @@ function qsps_verify_mails($m, $att){
 		*/
 
 		//TODO: Handle encryption
-		
+
 		//moment of truth
 		if(openssl_verify($dt, $sig, $pkey)==1)
 			array_push($ret, $m[$i]);
